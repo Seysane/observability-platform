@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}About - Order desk{% endblock %}
+{% block content %}
+<h1>About</h1>
+<p>Details about the running instance.</p>
+<dl class="facts">
+  <dt>App version</dt><dd>{{ version }}</dd>
+  <dt>App host</dt><dd>{{ hostname }}</dd>
+  <dt>Database</dt><dd>PostgreSQL {{ db_version }}</dd>
+  <dt>Database host</dt><dd>{{ db_host }} / {{ db_name }}</dd>
+  <dt>Database size</dt><dd>{{ db_size_mb }} MB</dd>
+  <dt>Health check</dt><dd><a href="{{ url_for('health') }}">/health</a></dd>
+</dl>
+{% endblock %}

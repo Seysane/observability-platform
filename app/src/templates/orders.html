@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Orders - Order desk{% endblock %}
+{% block content %}
+<h1>Orders</h1>
+
+<form method="post" action="{{ url_for('create_order') }}" class="new-order">
+  <h2>New order</h2>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <label>Customer <input name="customer" value="{{ form.get('customer', '') }}" required></label>
+  <label>Item <input name="item" value="{{ form.get('item', '') }}" required></label>
+  <label>Amount (PLN) <input name="amount" inputmode="decimal" value="{{ form.get('amount', '') }}" required></label>
+  <button type="submit">Add order</button>
+</form>
+
+<nav class="filters" aria-label="Order status">
+  <a href="{{ url_for('orders', status='all') }}" {% if status == 'all' %}aria-current="page"{% endif %}>All ({{ stats.total }})</a>
+  <a href="{{ url_for('orders', status='open') }}" {% if status == 'open' %}aria-current="page"{% endif %}>Open ({{ stats.open }})</a>
+  <a href="{{ url_for('orders', status='fulfilled') }}" {% if status == 'fulfilled' %}aria-current="page"{% endif %}>Fulfilled ({{ stats.fulfilled }})</a>
+</nav>
+
+{% if rows %}
+<div class="table-scroll">
+<table>
+  <thead>
+    <tr><th>#</th><th>Customer</th><th>Item</th><th class="num">Amount</th><th>Created</th><th>Status</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for o in rows %}
+    <tr>
+      <td>{{ o.id }}</td>
+      <td>{{ o.customer }}</td>
+      <td>{{ o.item }}</td>
+      <td class="num">{{ o.amount | money }}</td>
+      <td>{{ o.created_at }}</td>
+      <td><span class="badge {{ 'done' if o.fulfilled else 'open' }}">{{ 'Fulfilled' if o.fulfilled else 'Open' }}</span></td>
+      <td>
+        <form method="post" action="{{ url_for('toggle_order', order_id=o.id) }}">
+          <input type="hidden" name="status" value="{{ status }}">
+          <button type="submit" class="small">{{ 'Reopen' if o.fulfilled else 'Mark fulfilled' }}</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">No orders in this view.</p>
+{% endif %}
+{% endblock %}
