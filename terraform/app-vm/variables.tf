@@ -63,3 +63,15 @@ variable "ssh_public_key_path" {
   description = "SSH public key file path"
   default     = "~/.ssh/id_ed25519.pub"
 }
+
+variable "debian_image_url" {
+  type        = string
+  description = "Pinned Debian 12 generic image URL"
+  default     = "https://cloud.debian.org/images/cloud/bookworm/20261018-2635/debian-12-generic-amd64-20261018-2635.qcow2"
+}
+
+variable "debian_file_name" {
+  type        = string
+  description = "Debian file name"
+  default     = "debian-12-generic-amd64-20261018-2635.qcow2"
+}
