@@ -1,12 +1,12 @@
 terraform {
-    required_providers {
-      proxmox = {
-        source = "bpg/proxmox"
-        version = "0.116.0"
-      }
+  required_providers {
+    proxmox = {
+      source  = "bpg/proxmox"
+      version = "0.116.0"
     }
+  }
 }
 
 provider "proxmox" {
-    
+
 }
