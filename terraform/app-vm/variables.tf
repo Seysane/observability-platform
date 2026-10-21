@@ -77,7 +77,7 @@ variable "debian_file_name" {
 }
 
 variable "image_node_name" {
-  type = string
+  type        = string
   description = "Node that downloads the image (shared storage)"
-  default = "pve"
+  default     = "pve"
 }
