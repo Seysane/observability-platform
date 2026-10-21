@@ -1,7 +1,7 @@
 variable "node_name" {
   type        = string
   description = "Proxmox node the VM runs on"
-  default     = "pve"
+  default     = "pve2"
 }
 
 variable "datastore_id" {
@@ -74,4 +74,10 @@ variable "debian_file_name" {
   type        = string
   description = "Debian file name"
   default     = "debian-12-generic-amd64-20261018-2635.qcow2"
+}
+
+variable "image_node_name" {
+  type = string
+  description = "Node that downloads the image (shared storage)"
+  default = "pve"
 }
