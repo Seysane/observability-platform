@@ -3,6 +3,9 @@ name: CI/CD
 on:
   push:
 
+env:
+  IMAGE: ghcr.io/seysane/observability-platform-app
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -31,3 +34,51 @@ jobs:
         run: pip install -r app/requirements-dev.txt
       - name: Run tests
         run: pytest app/tests
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./app
+          push: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
+
+  notify:
+    needs: [test, build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord message
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RESULT_TEST: ${{ needs.test.result }}
+          RESULT_BUILD: ${{ needs.build.result }}
+          BRANCH: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$RESULT_TEST" = "success" ] && [ "$RESULT_BUILD" = "success" ]; then
+            STATUS="SUCCESS"; COLOR=3066993
+          else
+            STATUS="FAILED"; COLOR=15158332
+          fi
+          DESC=$(printf 'Branch: %s\nCommit: %s\nTests: %s\nBuild: %s' \
+            "$BRANCH" "${SHA:0:7}" "$RESULT_TEST" "$RESULT_BUILD")
+          PAYLOAD=$(jq -n \
+            --arg title "CI/CD: $STATUS" \
+            --arg desc "$DESC" \
+            --arg url "$RUN_URL" \
+            --argjson color "$COLOR" \
+            '{embeds: [{title: $title, description: $desc, url: $url, color: $color}]}')
+          curl -sS -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK"
