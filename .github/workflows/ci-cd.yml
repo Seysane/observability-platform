@@ -98,7 +98,7 @@ jobs:
       - name: Deploy application
         working-directory: ansible
         env:
-          APP_TAG: ${{ github.sha }}
+          APP_TAG: sha-${{ github.sha }}
         run: ansible-playbook site.yml -e "app_tag=${APP_TAG}"
 
   notify:
