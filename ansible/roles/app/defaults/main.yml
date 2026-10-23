@@ -1,0 +1,4 @@
+---
+app_dir: /opt/app
+app_image: ghcr.io/seysane/observability-platform-app
+app_tag: f7e4011f0543f06a43f8bf7de90229fc574086ac

@@ -11,6 +11,7 @@ crash.log
 .env
 *.pem
 *.key
+.vault_pass
 
 # Python
 __pycache__/
