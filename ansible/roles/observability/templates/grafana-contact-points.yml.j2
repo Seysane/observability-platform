@@ -8,7 +8,7 @@ contactPoints:
       - uid: discord-webhook
         type: discord
         settings:
-          url: "{{ discord_webhook_url }}"
+          url: {{ discord_webhook_url | to_json }}
           use_discord_username: false
           message: '{{ "{{ template \"default.message\" ." }} }}'
 

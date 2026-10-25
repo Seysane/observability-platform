@@ -95,11 +95,16 @@ jobs:
           printf '%s' "$ANSIBLE_VAULT_PASSWORD" > ansible/.vault_pass
           chmod 600 ansible/.vault_pass
 
+      
       - name: Deploy application
         working-directory: ansible
         env:
           APP_TAG: sha-${{ github.sha }}
-        run: ansible-playbook site.yml -e "app_tag=${APP_TAG}"
+        run: ansible-playbook site.yml -e "app_tag=${APP_TAG}" --vault-password-file .vault_pass
+
+      - name: Deploy observability stack
+        working-directory: ansible
+        run: ansible-playbook site-observability.yml --vault-password-file .vault_pass
 
   notify:
     needs: [test, build, deploy]

@@ -107,16 +107,16 @@
     owner: root
     group: root
     mode: "0644"
+- name: Deploy Grafana Discord contact points
+  ansible.builtin.template:
+    src: grafana-contact-points.yml.j2
+    dest: "{{ observability_dir }}/grafana/provisioning/alerting/contact-points.yml"
+    owner: "472"
+    group: "472"
+    mode: "0400"
+  no_log: true
 - name: Start observability stack
   community.docker.docker_compose_v2:
     project_src: "{{ observability_dir }}"
     state: present
     pull: missing
-- name: Deploy Grafana Discord contact points
-  ansible.builtin.template:
-    src: grafana-contact-points.yml.j2
-    dest: "{{ observability_dir }}/grafana/provisioning/alerting/contact-points.yml"
-    owner: root
-    group: root
-    mode: "0600"
-  no_log: true
