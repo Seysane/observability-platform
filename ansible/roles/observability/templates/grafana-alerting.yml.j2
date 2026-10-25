@@ -46,7 +46,7 @@ groups:
                 type: prometheus
                 uid: prometheus
               editorMode: code
-              expr: probe_success{job="client-app"} == 0
+              expr: probe_success{job="client-app"} == bool 0
               instant: true
               refId: A
         noDataState: OK
