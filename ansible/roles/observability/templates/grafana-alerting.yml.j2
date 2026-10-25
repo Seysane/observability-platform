@@ -32,3 +32,28 @@ groups:
         annotations:
           summary: "A Prometheus target is unavailable"
           description: "A monitored target has been down for more than 2 minutes."
+      - uid: client-app-down
+        title: Client application unavailable
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: probe_success{job="client-app"} == 0
+              instant: true
+              refId: A
+        noDataState: NoData
+        execErrState: Error
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Client application is unavailable"
+          description: "The HTTP probe for the client application has failed for more than 1 minute."
