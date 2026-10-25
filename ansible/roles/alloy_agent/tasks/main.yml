@@ -1,0 +1,47 @@
+---
+- name: Install Docker packages
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - docker.io
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ensure Docker is running
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Create Alloy configuration directory
+  ansible.builtin.file:
+    path: "{{ alloy_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy Alloy configuration
+  ansible.builtin.template:
+    src: config.alloy.j2
+    dest: "{{ alloy_config_dir }}/config.alloy"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Alloy
+
+- name: Deploy Alloy Docker Compose configuration
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ alloy_config_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Alloy
+
+- name: Start Alloy
+  community.docker.docker_compose_v2:
+    project_src: "{{ alloy_config_dir }}"
+    state: present
+    pull: missing

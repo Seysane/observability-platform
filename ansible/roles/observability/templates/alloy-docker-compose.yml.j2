@@ -1,0 +1,25 @@
+---
+services:
+  alloy:
+    image: "{{ alloy_image }}"
+    container_name: alloy
+    restart: unless-stopped
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - "{{ alloy_config_dir }}/config.alloy:/etc/alloy/config.alloy:ro"
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+      - alloy-data:/var/lib/alloy/data
+    networks:
+      - alloy
+
+volumes:
+  alloy-data:
+
+networks:
+  alloy:
+    driver: bridge

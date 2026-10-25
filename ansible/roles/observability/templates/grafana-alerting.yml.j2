@@ -1,0 +1,34 @@
+---
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: infrastructure-alerts
+    folder: Infrastructure
+    interval: 1m
+    rules:
+      - uid: prometheus-down
+        title: Prometheus target unavailable
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: up == 0
+              instant: true
+              refId: A
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "A Prometheus target is unavailable"
+          description: "A monitored target has been down for more than 2 minutes."

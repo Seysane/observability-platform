@@ -1,0 +1,33 @@
+---
+# Directory containing the observability stack
+observability_dir: /opt/observability
+
+# Container images
+grafana_image: grafana/grafana:11.6.0
+loki_image: grafana/loki:3.5.0
+prometheus_image: prom/prometheus:v3.4.2
+node_exporter_image: prom/node-exporter:v1.9.1
+blackbox_exporter_image: prom/blackbox-exporter:v0.27.0
+alloy_image: grafana/alloy:v1.8.3
+
+# Service ports
+grafana_port: 3000
+loki_port: 3100
+prometheus_port: 9090
+
+# Grafana credentials
+grafana_admin_user: admin
+grafana_admin_password: "{{ vault_grafana_admin_password }}"
+
+# Data retention
+prometheus_retention_time: 7d
+prometheus_retention_size: 5GB
+loki_retention_period: 168h
+
+# Client application
+client_app_host: 192.168.1.60
+client_app_port: 8080
+
+# Alloy log collection
+alloy_config_dir: /opt/alloy
+loki_push_url: http://192.168.1.70:3100/loki/api/v1/push

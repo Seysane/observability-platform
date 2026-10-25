@@ -1,0 +1,6 @@
+---
+- name: Deploy Alloy log collector to application host
+  hosts: app
+  become: true
+  roles:
+    - alloy_agent

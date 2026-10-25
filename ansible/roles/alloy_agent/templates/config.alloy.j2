@@ -1,0 +1,20 @@
+local.file_match "docker_logs" {
+  path_targets = [
+    {
+      __path__ = "/var/lib/docker/containers/*/*-json.log",
+      job      = "docker",
+      host     = "client-app",
+    },
+  ]
+}
+
+loki.source.file "docker_logs" {
+  targets    = local.file_match.docker_logs.targets
+  forward_to = [loki.write.remote.receiver]
+}
+
+loki.write "remote" {
+  endpoint {
+    url = "{{ loki_push_url }}"
+  }
+}

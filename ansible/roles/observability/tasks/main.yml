@@ -1,0 +1,114 @@
+---
+- name: Install required system packages
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+- name: Create APT keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+- name: Add official Docker repository key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/debian/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    owner: root
+    group: root
+    mode: "0644"
+- name: Add official Docker repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bookworm stable"
+    filename: docker
+    state: present
+    update_cache: true
+- name: Install Docker Engine and Compose plugin
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+- name: Ensure Docker is enabled and running
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+- name: Create observability directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ observability_dir }}"
+    - "{{ observability_dir }}/prometheus"
+    - "{{ observability_dir }}/blackbox"
+    - "{{ observability_dir }}/loki"
+    - "{{ observability_dir }}/alloy"
+    - "{{ observability_dir }}/grafana/provisioning/datasources"
+    - "{{ observability_dir }}/grafana/provisioning/alerting"
+- name: Deploy Prometheus configuration
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ observability_dir }}/prometheus/prometheus.yml"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Deploy Blackbox Exporter configuration
+  ansible.builtin.template:
+    src: blackbox.yml.j2
+    dest: "{{ observability_dir }}/blackbox/config.yml"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Deploy Loki configuration
+  ansible.builtin.template:
+    src: loki-config.yml.j2
+    dest: "{{ observability_dir }}/loki/loki-config.yml"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Deploy Grafana datasource configuration
+  ansible.builtin.template:
+    src: datasources.yml.j2
+    dest: "{{ observability_dir }}/grafana/provisioning/datasources/datasources.yml"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Deploy Grafana alerting configuration
+  ansible.builtin.template:
+    src: grafana-alerting.yml.j2
+    dest: "{{ observability_dir }}/grafana/provisioning/alerting/alerts.yml"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Deploy Grafana environment file
+  ansible.builtin.template:
+    src: grafana.env.j2
+    dest: "{{ observability_dir }}/grafana.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+- name: Deploy Docker Compose configuration
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ observability_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Start observability stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ observability_dir }}"
+    state: present
+    pull: missing

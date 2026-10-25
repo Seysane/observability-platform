@@ -1,0 +1,6 @@
+---
+- name: Configure observability stack
+  hosts: observability
+  become: true
+  roles:
+    - observability
