@@ -57,6 +57,8 @@
     - "{{ observability_dir }}/alloy"
     - "{{ observability_dir }}/grafana/provisioning/datasources"
     - "{{ observability_dir }}/grafana/provisioning/alerting"
+    - "{{ observability_dir }}/grafana/provisioning/dashboards"
+    - "{{ observability_dir }}/grafana/dashboards"
 - name: Deploy Prometheus configuration
   ansible.builtin.template:
     src: prometheus.yml.j2
@@ -115,6 +117,20 @@
     group: "472"
     mode: "0400"
   no_log: true
+- name: Deploy Grafana dashboard provisioning configuration
+  ansible.builtin.template:
+    src: grafana-dashboards.yml.j2
+    dest: "{{ observability_dir }}/grafana/provisioning/dashboards/dashboards.yml"
+    owner: root
+    group: root
+    mode: "0644"
+- name: Deploy Observability Overview dashboard
+  ansible.builtin.copy:
+    src: observability-dashboard.json
+    dest: "{{ observability_dir }}/grafana/dashboards/observability-dashboard.json"
+    owner: "472"
+    group: "472"
+    mode: "0644"
 - name: Start observability stack
   community.docker.docker_compose_v2:
     project_src: "{{ observability_dir }}"
