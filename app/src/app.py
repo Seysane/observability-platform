@@ -1,9 +1,11 @@
 import logging
 import os
 import socket
+import sys
 import time
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from importlib.metadata import version as package_version
 
 import psycopg
 from flask import Flask, abort, g, jsonify, redirect, render_template, request, url_for
@@ -109,11 +111,10 @@ def create_app(config=None):
             form=form or {},
         )
 
-    @app.post("/orders")
-    def create_order():
-        customer = request.form.get("customer", "").strip()
-        item = request.form.get("item", "").strip()
-        raw_amount = request.form.get("amount", "").strip().replace(",", ".")
+    def parse_order_form(form):
+        customer = form.get("customer", "").strip()
+        item = form.get("item", "").strip()
+        raw_amount = form.get("amount", "").strip().replace(",", ".")
         try:
             amount = Decimal(raw_amount).quantize(Decimal("0.01"))
             if not (Decimal("0") <= amount <= MAX_AMOUNT):
@@ -122,6 +123,13 @@ def create_app(config=None):
             amount = None
 
         if not customer or not item or amount is None:
+            return None
+        return customer, item, amount
+
+    @app.post("/orders")
+    def create_order():
+        order_data = parse_order_form(request.form)
+        if order_data is None:
             log.warning("order rejected: invalid form data")
             return (
                 render_orders(
@@ -132,6 +140,7 @@ def create_app(config=None):
                 400,
             )
 
+        customer, item, amount = order_data
         db = get_db()
         row = db.execute(
             "INSERT INTO orders (customer, item, amount) VALUES (%s, %s, %s) RETURNING id",
@@ -140,6 +149,69 @@ def create_app(config=None):
         db.commit()
         log.info("order created id=%s customer=%r amount=%s", row["id"], customer, amount)
         return redirect(url_for("orders", status="open"))
+
+    @app.get("/orders/<int:order_id>/edit")
+    def edit_order(order_id):
+        row = get_db().execute(
+            "SELECT id, customer, item, amount FROM orders WHERE id = %s",
+            (order_id,),
+        ).fetchone()
+        if row is None:
+            abort(404)
+        status = request.args.get("status", "all")
+        if status not in STATUSES:
+            status = "all"
+        return render_template("edit_order.html", order=row, status=status, error=None, form={})
+
+    @app.post("/orders/<int:order_id>/edit")
+    def update_order(order_id):
+        db = get_db()
+        row = db.execute(
+            "SELECT id, customer, item, amount FROM orders WHERE id = %s",
+            (order_id,),
+        ).fetchone()
+        if row is None:
+            abort(404)
+
+        order_data = parse_order_form(request.form)
+        status = request.form.get("status", "all")
+        if status not in STATUSES:
+            status = "all"
+        if order_data is None:
+            log.warning("order update rejected: invalid form data id=%s", order_id)
+            return (
+                render_template(
+                    "edit_order.html",
+                    order=row,
+                    status=status,
+                    error="Enter a customer, an item and an amount of 0 or more.",
+                    form=request.form,
+                ),
+                400,
+            )
+
+        customer, item, amount = order_data
+        db.execute(
+            "UPDATE orders SET customer = %s, item = %s, amount = %s WHERE id = %s",
+            (customer, item, amount, order_id),
+        )
+        db.commit()
+        log.info("order updated id=%s customer=%r amount=%s", order_id, customer, amount)
+        return redirect(url_for("orders", status=status))
+
+    @app.post("/orders/<int:order_id>/delete")
+    def delete_order(order_id):
+        db = get_db()
+        row = db.execute(
+            "DELETE FROM orders WHERE id = %s RETURNING id", (order_id,)
+        ).fetchone()
+        if row is None:
+            log.warning("delete failed: order id=%s not found", order_id)
+            abort(404)
+        db.commit()
+        log.info("order deleted id=%s", order_id)
+        status = request.form.get("status", "all")
+        return redirect(url_for("orders", status=status if status in STATUSES else "all"))
 
     @app.post("/orders/<int:order_id>/toggle")
     def toggle_order(order_id):
@@ -176,7 +248,10 @@ def create_app(config=None):
         return render_template(
             "about.html",
             version=app.config["APP_VERSION"],
+            build_commit=app.config["APP_VERSION"].removeprefix("sha-"),
             hostname=socket.gethostname(),
+            python_version=sys.version.split()[0],
+            flask_version=package_version("Flask"),
             db_host=db.info.host,
             db_name=db.info.dbname,
             db_version=version,

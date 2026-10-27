@@ -33,10 +33,15 @@
       <td class="num">{{ o.amount | money }}</td>
       <td>{{ o.created_at }}</td>
       <td><span class="badge {{ 'done' if o.fulfilled else 'open' }}">{{ 'Fulfilled' if o.fulfilled else 'Open' }}</span></td>
-      <td>
+      <td class="actions">
+        <a class="button-link small" href="{{ url_for('edit_order', order_id=o.id, status=status) }}">Edit</a>
         <form method="post" action="{{ url_for('toggle_order', order_id=o.id) }}">
           <input type="hidden" name="status" value="{{ status }}">
           <button type="submit" class="small">{{ 'Reopen' if o.fulfilled else 'Mark fulfilled' }}</button>
+        </form>
+        <form method="post" action="{{ url_for('delete_order', order_id=o.id) }}" onsubmit="return confirm('Delete this order permanently?');">
+          <input type="hidden" name="status" value="{{ status }}">
+          <button type="submit" class="small danger">Delete</button>
         </form>
       </td>
     </tr>

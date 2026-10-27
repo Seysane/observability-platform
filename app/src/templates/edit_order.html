@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Edit order #{{ order.id }} - Order desk{% endblock %}
+{% block content %}
+<h1>Edit order #{{ order.id }}</h1>
+
+<form method="post" action="{{ url_for('update_order', order_id=order.id) }}" class="order-form">
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <input type="hidden" name="status" value="{{ status }}">
+  <label>Customer
+    <input name="customer" value="{{ form.get('customer', order.customer) }}" required>
+  </label>
+  <label>Item
+    <input name="item" value="{{ form.get('item', order.item) }}" required>
+  </label>
+  <label>Amount (PLN)
+    <input name="amount" inputmode="decimal" value="{{ form.get('amount', order.amount) }}" required>
+  </label>
+  <div class="form-actions">
+    <button type="submit">Save changes</button>
+    <a class="button-link secondary" href="{{ url_for('orders', status=status) }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

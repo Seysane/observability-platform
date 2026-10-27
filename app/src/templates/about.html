@@ -2,13 +2,32 @@
 {% block title %}About - Order desk{% endblock %}
 {% block content %}
 <h1>About</h1>
-<p>Details about the running instance.</p>
+<p class="page-intro">Application build, runtime, and database details for this instance.</p>
+<section class="about-section">
+  <h2>Application</h2>
 <dl class="facts">
-  <dt>App version</dt><dd>{{ version }}</dd>
-  <dt>App host</dt><dd>{{ hostname }}</dd>
-  <dt>Database</dt><dd>PostgreSQL {{ db_version }}</dd>
-  <dt>Database host</dt><dd>{{ db_host }} / {{ db_name }}</dd>
-  <dt>Database size</dt><dd>{{ db_size_mb }} MB</dd>
-  <dt>Health check</dt><dd><a href="{{ url_for('health') }}">/health</a></dd>
+  <dt>Image tag</dt><dd><code>{{ version }}</code></dd>
+  <dt>Build commit</dt><dd><code title="{{ build_commit }}">{{ build_commit[:12] }}</code></dd>
+  <dt>Container hostname</dt><dd><code>{{ hostname }}</code><span class="hint">Runtime container identifier; it may change when the container is recreated.</span></dd>
+  <dt>Python</dt><dd>{{ python_version }}</dd>
+  <dt>Flask</dt><dd>{{ flask_version }}</dd>
 </dl>
+</section>
+
+<section class="about-section">
+  <h2>Database</h2>
+  <dl class="facts">
+    <dt>Status</dt><dd><span class="badge done">Connected</span></dd>
+    <dt>Engine</dt><dd>PostgreSQL {{ db_version }}</dd>
+    <dt>Host</dt><dd>{{ db_host }}</dd>
+    <dt>Database name</dt><dd>{{ db_name }}</dd>
+    <dt>Database size</dt><dd>{{ db_size_mb }} MB</dd>
+  </dl>
+</section>
+
+<section class="about-section">
+  <h2>Health check</h2>
+  <p>The health endpoint verifies that the application can query the database.</p>
+  <a class="button-link secondary" href="{{ url_for('health') }}">Open /health endpoint</a>
+</section>
 {% endblock %}
