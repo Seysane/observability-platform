@@ -113,7 +113,22 @@ Ansible deploys the observability stack, which runs in a separate Docker Compose
 - **Loki** stores logs, which can be explored in Grafana.
 - **Grafana** is provisioned with Prometheus and Loki data sources and an "Observability Overview" dashboard.
 
-The dashboard includes observability VM CPU, memory, and disk usage, application availability, HTTP response time, and the number of firing alerts. Alert rules cover unavailable Prometheus targets and an unavailable application. Grafana alerts are routed to the configured Discord contact point.
+The dashboard includes observability VM CPU, memory, and disk usage, application availability, HTTP response time, and the number of firing alerts. Grafana alert rules cover:
+
+- Prometheus scrape targets that remain unavailable for 2 minutes;
+- application HTTP probes that fail for 1 minute;
+- application HTTP response times above 2 seconds for 5 minutes;
+- observability VM CPU usage above 90% for 10 minutes;
+- observability VM memory usage above 90% for 5 minutes;
+- observability VM root disk usage above 85% for 5 minutes.
+
+Rules use `noDataState: OK` so an empty query result, such as `up == 0` when all targets are healthy, does not create a misleading `DatasourceNoData` alert. Query execution errors remain visible as errors. Notifications include a human-readable summary and a suggested first troubleshooting step, and are routed to the configured Discord contact point.
+
+Grafana alert links use `grafana_root_url` from the observability role defaults. Its default matches the current observability VM address (`http://192.168.1.70:3000/`); change it to the address reachable by Discord recipients if the VM uses a different IP, hostname, or reverse proxy. This prevents notification links from pointing to `localhost`.
+
+The current Node Exporter target reports metrics for the observability VM only. Additional useful alerts could cover the application VM's CPU, memory, and disk, database-specific metrics, and application error rates. Those require adding the corresponding exporters or metrics first.
+
+To apply alert rule changes, run the Ansible observability playbook. When Grafana provisioning files or credentials change, the role restarts the Grafana service so the updated configuration is loaded.
 
 ### Grafana Screenshot
 
