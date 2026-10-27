@@ -4,6 +4,7 @@
 <h1>Overview</h1>
 
 <dl class="summary">
+  <div><dt>Total orders</dt><dd>{{ stats.total }}</dd></div>
   <div><dt>Open orders</dt><dd class="open">{{ stats.open }}</dd></div>
   <div><dt>Fulfilled orders</dt><dd class="done">{{ stats.fulfilled }}</dd></div>
   <div><dt>Revenue from fulfilled</dt><dd>{{ stats.revenue | money }}</dd></div>
@@ -11,16 +12,26 @@
 
 <h2>Latest orders</h2>
 {% if latest %}
-<ul class="latest">
-  {% for o in latest %}
-  <li>
-    <span class="badge {{ 'done' if o.fulfilled else 'open' }}">{{ 'Fulfilled' if o.fulfilled else 'Open' }}</span>
-    <span class="who">{{ o.customer }}</span>
-    <span class="what">{{ o.item }}</span>
-    <span class="amt">{{ o.amount | money }}</span>
-  </li>
-  {% endfor %}
-</ul>
+<div class="table-scroll">
+  <table>
+    <thead>
+      <tr><th>Customer</th><th>Item</th><th class="num">Amount</th><th>Created</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for o in latest %}
+      <tr>
+        <td>{{ o.customer }}</td>
+        <td>{{ o.item }}</td>
+        <td class="num">{{ o.amount | money }}</td>
+        <td>{{ o.created_at }}</td>
+        <td><span class="badge {{ 'done' if o.fulfilled else 'open' }}">{{ 'Fulfilled' if o.fulfilled else 'Open' }}</span></td>
+        <td><a class="button-link small" href="{{ url_for('edit_order', order_id=o.id) }}">Edit</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p><a href="{{ url_for('orders') }}">View all orders</a></p>
 {% else %}
 <p class="empty">No orders yet. Add the first one on the <a href="{{ url_for('orders') }}">Orders</a> tab.</p>
 {% endif %}

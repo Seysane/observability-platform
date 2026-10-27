@@ -12,7 +12,7 @@
       <span class="brand">Order desk</span>
       <nav aria-label="Main">
         <a href="{{ url_for('overview') }}" {% if request.endpoint == 'overview' %}aria-current="page"{% endif %}>Overview</a>
-        <a href="{{ url_for('orders') }}" {% if request.endpoint in ('orders', 'create_order') %}aria-current="page"{% endif %}>Orders</a>
+        <a href="{{ url_for('orders') }}" {% if request.endpoint in ('orders', 'create_order', 'edit_order', 'update_order', 'toggle_order', 'delete_order') %}aria-current="page"{% endif %}>Orders</a>
         <a href="{{ url_for('about') }}" {% if request.endpoint == 'about' %}aria-current="page"{% endif %}>About</a>
       </nav>
     </div>
