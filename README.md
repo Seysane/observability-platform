@@ -12,6 +12,7 @@ The platform consists of a sample order management application and a separate ob
 - [Application](#application)
 - [Monitoring, Logs, and Alerts](#monitoring-logs-and-alerts)
 - [CI/CD and Discord Notifications](#cicd-and-discord-notifications)
+- [Final Pipeline: Application Update](#final-pipeline-application-update)
 - [Repository Structure](#repository-structure)
 - [Run Locally](#run-locally)
 - [Tests](#tests)
@@ -164,6 +165,34 @@ feature branch
 - In the current repository, `dev` and `staging` are **branch-based validation stages, not separate deployed environments**. There is only one application VM, and it receives changes only from `production`. The workflow does not deploy the running application to a staging VM. To test a deployed staging instance before production, provision a separate VM and configure a separate Ansible inventory and environment.
 
 Create the `dev`, `staging`, and `production` branches in GitHub if they do not exist yet. Configure rulesets or branch protection under **Settings → Rules → Rulesets** to require pull requests and successful workflow checks before merging (protecting `dev` is also recommended). For an additional production approval step, configure required reviewers for the `production` environment under **Settings → Environments**. The workflow declares the environment, but approval is not enforced until reviewers are configured in GitHub.
+
+### Final Pipeline: Application Update
+
+The latest application update improves the dashboard and order management experience. The overview now shows total, open, and fulfilled order counts, fulfilled revenue, and a table of recent orders. Users can edit order details, change fulfillment status, or delete an order. The About page displays clearer build, runtime, and database information.
+
+The update is promoted through the branches in order:
+
+```text
+Feature branch
+      |
+      v
+     dev  -- pull request -->  staging  -- pull request -->  production
+      tests and build           tests and build              tests, build, deploy
+```
+
+1. **Develop and validate on `dev`** — merge the feature into `dev` through a pull request after reviewing the changes and passing checks. GitHub Actions runs the tests against PostgreSQL and builds the Docker image.
+2. **Promote to `staging`** — open a pull request from `dev` to `staging`. Review the changes and wait for the required checks to pass before merging. The merge triggers another test run and image build.
+3. **Promote to `production`** — open a pull request from `staging` to `production`. After review and successful checks, merge the pull request. The push to `production` starts the production workflow.
+4. **Deploy** — GitHub Actions tests the application and builds and publishes the image to GHCR. The self-hosted runner then runs Ansible, which deploys the image identified by the commit SHA to the production application VM. If required reviewers are configured for the GitHub `production` environment, the deployment waits for approval.
+5. **Verify and notify** — check the deployment job in GitHub Actions and confirm that the application is available. The workflow sends its result to Discord; Prometheus and Blackbox Exporter continue checking application availability.
+
+In the current setup, `dev` and `staging` are branch-based validation stages, not separate running application environments. There is one application VM, and deployment to it happens only from `production`. A separate staging VM and Ansible configuration would be needed to deploy and test the running application in staging before production.
+
+#### Updated Application Dashboard
+
+The screenshot below shows the updated application dashboard. Replace it with a newer capture if the UI changes:
+
+![docs/images/app_panel_update.png](docs/images/app_panel_update.png)
 
 ## Repository Structure
 
