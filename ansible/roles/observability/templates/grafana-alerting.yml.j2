@@ -8,7 +8,7 @@ groups:
     interval: 1m
     rules:
       - uid: prometheus-down
-        title: Prometheus target unavailable
+        title: Prometheus scrape target unavailable
         condition: A
         data:
           - refId: A
@@ -21,17 +21,17 @@ groups:
                 type: prometheus
                 uid: prometheus
               editorMode: code
-              expr: up == 0
+              expr: up{job=~"prometheus|observability-node|client-app"} == 0
               instant: true
               refId: A
-        noDataState: NoData
+        noDataState: OK
         execErrState: Error
         for: 2m
         labels:
           severity: warning
         annotations:
-          summary: "A Prometheus target is unavailable"
-          description: "A monitored target has been down for more than 2 minutes."
+          summary: "Prometheus cannot scrape a monitoring target"
+          description: "A configured target has been unreachable for at least 2 minutes. Check Prometheus > Status > Targets and verify the target service and network connection."
       - uid: client-app-down
         title: Client application unavailable
         condition: A
@@ -55,5 +55,105 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Client application is unavailable"
-          description: "The HTTP probe for the client application has failed for more than 1 minute."
+          summary: "The order application is not responding over HTTP"
+          description: "The Blackbox HTTP probe has failed for at least 1 minute. Check the application container, its /health endpoint, and the configured application IP and port."
+      - uid: client-app-slow
+        title: Client application response is slow
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: probe_duration_seconds{job="client-app"} > 2
+              instant: true
+              refId: A
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "The order application is responding slowly"
+          description: "HTTP probes have taken longer than 2 seconds for at least 5 minutes. Check application and database response times."
+      - uid: observability-cpu-high
+        title: Observability VM CPU usage is high
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: 100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{job="observability-node", mode="idle"}[5m]))) > 90
+              instant: true
+              refId: A
+        noDataState: OK
+        execErrState: Error
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Observability VM CPU usage is above 90%"
+          description: "CPU usage has remained above 90% for at least 10 minutes. Check running containers and host processes."
+      - uid: observability-memory-high
+        title: Observability VM memory usage is high
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: 100 * (1 - node_memory_MemAvailable_bytes{job="observability-node"} / node_memory_MemTotal_bytes{job="observability-node"}) > 90
+              instant: true
+              refId: A
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Observability VM memory usage is above 90%"
+          description: "Memory usage has remained above 90% for at least 5 minutes. Check memory consumption by containers and host processes."
+      - uid: observability-disk-high
+        title: Observability VM root disk usage is high
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: 100 * (1 - node_filesystem_avail_bytes{job="observability-node", mountpoint="/", fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{job="observability-node", mountpoint="/", fstype!~"tmpfs|overlay"}) > 85
+              instant: true
+              refId: A
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Observability VM root disk usage is above 85%"
+          description: "Root disk usage has remained above 85% for at least 5 minutes. Check Prometheus and Loki data retention and available disk space."
